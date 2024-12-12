@@ -1,6 +1,14 @@
 {% extends 'base.html' %}
+
 {% block content %}
 <h1>Notes</h1>
+
+<!-- Search Form -->
+<form method="GET" action="{{ url_for('home') }}">
+    <input type="text" name="tag" placeholder="Search by tag" value="{{ request.args.get('tag', '') }}">
+    <button type="submit">Search</button>
+</form>
+
 <ul>
     {% for note in notes %}
     <li>

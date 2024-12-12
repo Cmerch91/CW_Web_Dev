@@ -16,7 +16,14 @@ class Note(db.Model):
 # Routes
 @app.route('/')
 def home():
-    notes = Note.query.all()
+    # Get the search tag query from the request arguments
+    tag = request.args.get('tag')
+    if tag:
+        # Filter notes where tags contain the search term (case-insensitive)
+        notes = Note.query.filter(Note.tags.ilike(f'%{tag}%')).all()
+    else:
+        # If no search term is provided, display all notes
+        notes = Note.query.all()
     return render_template('home.html', notes=notes)
 
 @app.route('/notes/new', methods=['GET', 'POST'])
@@ -53,6 +60,5 @@ def delete_note(id):
     return redirect(url_for('home'))
 
 if __name__ == '__main__':
-    db.create_all()  # This creates all tables defined by SQLAlchemy models
-    app.run(host="0.0.0.0", port=5000, debug=True)
-
+    db.create_all()
+    app.run(debug=True)
