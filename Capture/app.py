@@ -16,14 +16,20 @@ class Note(db.Model):
 # Routes
 @app.route('/')
 def home():
-    # Get the search tag query from the request arguments
-    tag = request.args.get('tag')
-    if tag:
-        # Filter notes where tags contain the search term (case-insensitive)
-        notes = Note.query.filter(Note.tags.ilike(f'%{tag}%')).all()
+    # Get the search query and search type (title or tags)
+    query = request.args.get('query')
+    search_type = request.args.get('search_type', 'title')  # default to 'title' if not provided
+
+    if query:
+        # Search based on the selected search type (title or tags)
+        if search_type == 'title':
+            notes = Note.query.filter(Note.title.ilike(f'%{query}%')).all()
+        else:  # search by tags
+            notes = Note.query.filter(Note.tags.ilike(f'%{query}%')).all()
     else:
-        # If no search term is provided, display all notes
+        # If no search query is provided, display all notes
         notes = Note.query.all()
+
     return render_template('home.html', notes=notes)
 
 @app.route('/notes/new', methods=['GET', 'POST'])

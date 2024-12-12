@@ -5,9 +5,21 @@
 
 <!-- Search Form -->
 <form method="GET" action="{{ url_for('home') }}">
-    <input type="text" name="tag" placeholder="Search by tag" value="{{ request.args.get('tag', '') }}">
+    <input type="text" name="query" placeholder="Search..." value="{{ request.args.get('query', '') }}">
+    
+    <!-- Search by dropdown (title or tags) -->
+    <select name="search_type">
+        <option value="title" {% if request.args.get('search_type') == 'title' %}selected{% endif %}>Title</option>
+        <option value="tags" {% if request.args.get('search_type') == 'tags' %}selected{% endif %}>Tags</option>
+    </select>
+
     <button type="submit">Search</button>
 </form>
+
+<!-- Clear Search Button (only visible when there's a search query) -->
+{% if request.args.get('query') %}
+    <a href="{{ url_for('home') }}">Clear Search</a>
+{% endif %}
 
 <ul>
     {% for note in notes %}
