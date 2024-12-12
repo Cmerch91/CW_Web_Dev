@@ -10,33 +10,51 @@ db = SQLAlchemy(app)
 class Note(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
-    content = db.Column(db.Text, nullable=False)
+    content = db.Column(db.Text, nullable=False)  # Store HTML content
     tags = db.Column(db.String(100), nullable=True)
+    is_saved = db.Column(db.Boolean, default=False)  # Column to track saved notes
 
 # Routes
 @app.route('/')
 def home():
-    # Get the search query and search type (title or tags)
     query = request.args.get('query')
-    search_type = request.args.get('search_type', 'title')  # default to 'title' if not provided
+    search_type = request.args.get('search_type', 'title')  # Default to 'title' if not provided
 
+    # Searching for notes on the homepage
     if query:
-        # Search based on the selected search type (title or tags)
         if search_type == 'title':
+            # Search both saved and unsaved notes by title
             notes = Note.query.filter(Note.title.ilike(f'%{query}%')).all()
-        else:  # search by tags
+        else:
+            # Search both saved and unsaved notes by tags
             notes = Note.query.filter(Note.tags.ilike(f'%{query}%')).all()
     else:
-        # If no search query is provided, display all notes
-        notes = Note.query.all()
+        # Show only unsaved notes by default if there's no search query
+        notes = Note.query.filter_by(is_saved=False).all()
 
     return render_template('home.html', notes=notes)
+
+@app.route('/saved')
+def saved_notes():
+    query = request.args.get('query')
+    search_type = request.args.get('search_type', 'title')  # Default to 'title' if not provided
+
+    # Searching only within saved notes
+    if query:
+        if search_type == 'title':
+            notes = Note.query.filter(Note.title.ilike(f'%{query}%'), Note.is_saved == True).all()
+        else:
+            notes = Note.query.filter(Note.tags.ilike(f'%{query}%'), Note.is_saved == True).all()
+    else:
+        notes = Note.query.filter_by(is_saved=True).all()  # Show only saved notes
+
+    return render_template('saved_notes.html', notes=notes)
 
 @app.route('/notes/new', methods=['GET', 'POST'])
 def new_note():
     if request.method == 'POST':
         title = request.form['title']
-        content = request.form['content']
+        content = request.form['content']  # This will be the HTML content from Quill
         tags = request.form['tags']
         new_note = Note(title=title, content=content, tags=tags)
         db.session.add(new_note)
@@ -45,12 +63,13 @@ def new_note():
         return redirect(url_for('home'))
     return render_template('note.html')
 
+
 @app.route('/notes/<int:id>', methods=['GET', 'POST'])
 def edit_note(id):
     note = Note.query.get_or_404(id)
     if request.method == 'POST':
         note.title = request.form['title']
-        note.content = request.form['content']
+        note.content = request.form['content']  # Get the HTML content from Quill
         note.tags = request.form['tags']
         db.session.commit()
         flash('Note updated successfully!', 'success')
@@ -65,6 +84,14 @@ def delete_note(id):
     flash('Note deleted successfully!', 'success')
     return redirect(url_for('home'))
 
+@app.route('/notes/save/<int:id>')
+def save_note(id):
+    note = Note.query.get_or_404(id)
+    note.is_saved = True  # Mark the note as saved
+    db.session.commit()
+    flash('Note saved successfully!', 'success')
+    return redirect(url_for('home'))
+
 if __name__ == '__main__':
-    db.create_all()
+    db.create_all()  # Ensure that the database is created and schema is updated
     app.run(debug=True)
