@@ -7,7 +7,7 @@
     <title>Capture - Notes</title>
 </head>
 <body>
-    <nav>
+    <nav> <!--Navigation-->
         <a href="{{ url_for('home') }}">Home</a>
         <a href="{{ url_for('new_note') }}">New Note</a>
         <a href="{{ url_for('saved_notes') }}">Saved Notes</a>
@@ -18,8 +18,8 @@
         {% endif %}
     </nav>
 
+	<!--Flash messages-->
     <div class="container">
-        <!-- Display flash messages -->
         {% with messages = get_flashed_messages() %}
             {% if messages %}
                 <ul>
@@ -29,7 +29,6 @@
                 </ul>
             {% endif %}
         {% endwith %}
-
         {% block content %}{% endblock %}
     </div>
 </body>
